@@ -1,2 +1,4 @@
 # roc-data
-Common datatypes such as Stack and Queue implemented in Roc
+The aim is for this package to contain common datatypes.
+
+Currently it only contains Stack.
