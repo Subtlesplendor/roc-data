@@ -1,9 +1,14 @@
 interface Data.NonEmpty 
-    exposes [toList, fromList, get, replace, set, update]
+    exposes [toList, fromList, single, len, first, last, addOneAndRepeat, min, max]
     imports []
 
-## NonEmptyList is a non-empty list.
 
+## Type 
+##
+## `NonEmpty` is a non-empty list, useful for modeling data with one or more occurence.
+## `NonEmpty` is likely to be less performant than the built-in List, but is more ergonomic for cases where existence of data is guaranteed.
+## There are two ways to construct a `NonEmpty`. It can either be constructed using `fromList`, or `single`.
+## `NonEmpty` defines many of the same functions as `List`. Certain functions like `drop` and `keep` are more suited to regular `List`s, and are not implemented for `NonEmpty`. To access them it is best to cast back to a list using `toList`.
 NonEmpty a := {body: List a, tail: a} implements [Eq { isEq: isEq }]
 
 isEq : NonEmpty a, NonEmpty a -> Bool 
@@ -11,29 +16,48 @@ isEq : NonEmpty a, NonEmpty a -> Bool
 isEq = \nonemptyA, nonEmptyB ->
     nonemptyA |> toList == nonEmptyB |> toList
 
-single: a -> NonEmpty a
-single = \x -> @NonEmpty {body: [], tail: x}
-
-toList: NonEmpty a -> List a
-toList = \@NonEmpty {body, tail} ->
-    body |> List.append tail
-
-expect single "a" |> toList |> List.len == 1
-expect 
-    @NonEmpty {body: ["a","b"], tail:"c"}
-    |> toList
-    == ["a","b","c"]
-
-
+## Construct a `NonEmpty` from a list. Returns `ListWasEmpty` if the input list is empty.
+## ```
+## NonEmpty.fromList [1, 2, 3]
+##
+## expect [] |> NonEmpty.fromList == Err ListWasEmpty
+## ```
 fromList: List a -> Result (NonEmpty a) [ListWasEmpty]
 fromList = \lst ->
     tail <- lst |> List.last |> Result.try
     body = lst |> List.dropLast 1
     Ok (@NonEmpty {body, tail})
 
-expect [] |> fromList |> Result.isErr
+expect [] |> fromList == Err ListWasEmpty
 
 expect ["a", "b", "c"] |> fromList == Ok (@NonEmpty {body: ["a","b"], tail: "c"})
+
+## Constructs a "singleton" `NonEmpty` from a single element.
+single: a -> NonEmpty a
+single = \x -> @NonEmpty {body: [], tail: x}
+
+## Gives the length of the non-empty list.
+## ```
+## expect single "a" |> NonEmpty.len == 1
+## ```
+len: NonEmpty * -> Nat
+len = \nonempty ->
+        nonempty |> toList |> List.len
+
+expect len (@NonEmpty {body: [], tail: "a"}) == 1
+expect len (@NonEmpty {body: ["b","c"], tail: "d"}) == 3 
+expect single "a" |> toList |> List.len == 1
+
+
+## Convert a `NonEmpty` to a list.
+toList: NonEmpty a -> List a
+toList = \@NonEmpty {body, tail} ->
+    body |> List.append tail
+
+expect 
+    @NonEmpty {body: ["a","b"], tail:"c"}
+    |> toList
+    == ["a","b","c"]
 
 expect
     lst = [1, 2, 3]
@@ -41,7 +65,61 @@ expect
     when res is
         Ok nonempty -> nonempty |> toList == lst
         Err _ -> Bool.false
+      
+last: NonEmpty a -> a
+last = \(@NonEmpty {tail}) -> tail
 
+expect @NonEmpty {body: ["a","b"], tail: "c"} |> last == "c"
+
+first: NonEmpty a -> a
+first = \(@NonEmpty {body, tail}) ->
+    when body is
+        [head, ..] -> head
+        [] -> tail
+
+expect @NonEmpty {body: [], tail: "c"} |> first == "c"
+expect @NonEmpty {body: ["a","b"], tail: "c"} |> first == "a"
+
+min: NonEmpty (Num a) -> Num a
+min = \(@NonEmpty {body, tail}) ->
+    body |> List.walk tail Num.min
+
+expect @NonEmpty {body: [2,1], tail: 3} |> min == 1
+
+max: NonEmpty (Num a) -> Num a
+max = \(@NonEmpty {body, tail}) ->
+    body |> List.walk tail Num.max  
+
+expect @NonEmpty {body: [2,1], tail: 3} |> max == 3 
+
+## Add one occurence of an element `x` and then repeat it `n` times.
+## ```
+## expect x |> NonEmpty.addOneAndRepeat 5 |> NonEmpty.len == 6
+## ```
+addOneAndRepeat: a, Nat -> NonEmpty a
+addOneAndRepeat = \x, n ->
+    @NonEmpty {body: x |> List.repeat n, tail: x}
+
+
+sum: NonEmpty (Num a) -> Num a   
+sum = \nonempty ->
+    nonempty |> toList |> List.sum
+
+product: NonEmpty (Num a) -> Num a   
+product = \nonempty ->
+    nonempty |> toList |> List.product    
+
+
+any: NonEmpty a, (a -> Bool) -> Bool
+any = \nonempty, pred ->
+    nonempty |> toList |> List.any pred
+
+
+all: NonEmpty a, (a -> Bool) -> Bool
+all = \nonempty, pred ->
+        nonempty |> toList |> List.all pred 
+
+        
 get: NonEmpty a, Nat -> Result a [OutOfBounds]
 get = \nonempty, n ->
     nonempty |> toList |> List.get n
@@ -126,8 +204,7 @@ append: NonEmpty a, a -> NonEmpty a
 append = \nonempty, val ->
     @NonEmpty {body: nonempty |> toList, tail: val}
 
-expect 
-    @NonEmpty {body: [1,2], tail: 3} |> append 4 == @NonEmpty {body: [1,2,3], tail: 4}   
+expect @NonEmpty {body: [1,2], tail: 3} |> append 4 == @NonEmpty {body: [1,2,3], tail: 4}   
     
 appendIfOk: NonEmpty a, Result a * -> NonEmpty a
 appendIfOk = \nonempty, res ->
@@ -165,17 +242,6 @@ expect
     @NonEmpty {body: [1,2], tail: 3} |> prependIfOk res == @NonEmpty {body: [1,2], tail: 3}             
 
 
-
-len: NonEmpty * -> Nat
-len = \nonempty ->
-        nonempty |> toList |> List.len
-
-expect
-    len (@NonEmpty {body: [], tail: "a"}) == 1
-
-expect
-    len (@NonEmpty {body: ["b","c"], tail: "d"}) == 3 
-
 concat: NonEmpty a, NonEmpty a -> NonEmpty a
 concat = \nonempty, (@NonEmpty {body: bodyB, tail: tailB}) ->
         @NonEmpty {body: nonempty |> toList |> List.concat bodyB, tail: tailB}
@@ -187,23 +253,6 @@ expect
     actual = nonemptyA |> concat nonemptyB
     actual == expected
 
-last: NonEmpty a -> a
-last = \(@NonEmpty {tail}) -> tail
-
-expect @NonEmpty {body: ["a","b"], tail: "c"} |> last == "c"
-
-first: NonEmpty a -> a
-first = \(@NonEmpty {body, tail}) ->
-    when body is
-        [head, ..] -> head
-        [] -> tail
-
-expect @NonEmpty {body: [], tail: "c"} |> first == "c"
-expect @NonEmpty {body: ["a","b"], tail: "c"} |> first == "a"
-
-addOneAndRepeat: a, Nat -> NonEmpty a
-addOneAndRepeat = \x, n ->
-    @NonEmpty {body: x |> List.repeat n, tail: x}
 
 reverse: NonEmpty a -> NonEmpty a
 reverse = \nonempty ->
@@ -254,24 +303,6 @@ walkFromUntil: NonEmpty elem, Nat, state, (state, elem -> [Continue state, Break
 walkFromUntil = \nonempty, n, state, func ->
             nonempty |> toList |> List.walkFromUntil n state func         
 
-
-sum: NonEmpty (Num a) -> Num a   
-sum = \nonempty ->
-    nonempty |> toList |> List.sum
-
-product: NonEmpty (Num a) -> Num a   
-product = \nonempty ->
-    nonempty |> toList |> List.product    
-
-
-any: NonEmpty a, (a -> Bool) -> Bool
-any = \nonempty, pred ->
-    nonempty |> toList |> List.any pred
-
-
-all: NonEmpty a, (a -> Bool) -> Bool
-all = \nonempty, pred ->
-        nonempty |> toList |> List.all pred 
         
 
 countIf : NonEmpty a, (a -> Bool) -> Nat 
