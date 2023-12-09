@@ -2,6 +2,8 @@ interface Data.NonEmpty
     exposes [toList, fromList, get, replace, set, update]
     imports []
 
+## NonEmptyList is a non-empty list.
+
 NonEmpty a := {body: List a, tail: a} implements [Eq { isEq: isEq }]
 
 isEq : NonEmpty a, NonEmpty a -> Bool 
@@ -263,13 +265,13 @@ product = \nonempty ->
 
 
 any: NonEmpty a, (a -> Bool) -> Bool
-any = \nonempty, func ->
-    nonempty |> toList |> List.any
+any = \nonempty, pred ->
+    nonempty |> toList |> List.any pred
 
 
 all: NonEmpty a, (a -> Bool) -> Bool
-all = \nonempty, func ->
-        nonempty |> toList |> List.all   
+all = \nonempty, pred ->
+        nonempty |> toList |> List.all pred 
         
 
 countIf : NonEmpty a, (a -> Bool) -> Nat 
@@ -279,3 +281,6 @@ countIf = \nonempty, pred ->
 map: NonEmpty a, (a -> b) -> NonEmpty b
 map = \(@NonEmpty {body, tail}), func ->
     @NonEmpty {body: body |> List.map func, tail: (func tail)}
+
+
+
