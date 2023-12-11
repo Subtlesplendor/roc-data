@@ -1,5 +1,5 @@
 interface Data.Queue 
-    exposes [Queue, new, size, peek, enque, deque, #Principals
+    exposes [Queue, empty, size, peek, enque, deque, #Principals
              fromList, toList, isEmpty, before, process #Ergonomics
              ]
     imports []
@@ -9,15 +9,15 @@ Queue a := List a
 
 # -- Core -------
 
-new : {} -> Queue *
-new = \{} ->
+empty : {} -> Queue *
+empty = \{} ->
     @Queue []
 
 size: Queue * -> Nat
 size = \@Queue lst ->
     List.len lst    
 
-expect new {} |> size == 0
+expect empty {} |> size == 0
 
 peek: Queue a -> Result a [QueueWasEmpty]
 peek = \@Queue lst ->
@@ -25,7 +25,7 @@ peek = \@Queue lst ->
     Err QueueWasEmpty    
 
 expect 
-    new {} 
+    empty {} 
         |> peek 
         == Err QueueWasEmpty       
 
@@ -36,7 +36,7 @@ enque = \@Queue lst, a ->
     @Queue (lst |> List.append a)
 
 expect 
-    new {} 
+    empty {} 
         |> enque 1
         |> enque 2
         |> peek 
@@ -51,14 +51,14 @@ deque = \@Queue lst ->
             Err QueueWasEmpty
 
 expect
-    err = new {} |> deque
+    err = empty {} |> deque
     when err is
         Ok _ -> Bool.false
         Err QueueWasEmpty -> Bool.true
 
 expect 
     res = 
-        new {} 
+        empty {} 
         |> enque 1 
         |> enque 2 
         |> deque 
@@ -74,17 +74,17 @@ isEmpty: Queue * -> Bool
 isEmpty = \@Queue lst ->
     lst |> List.isEmpty
 
-expect new {} |> isEmpty
+expect empty {} |> isEmpty
 
-expect new {} |> enque 1 |> isEmpty |> Bool.not
+expect empty {} |> enque 1 |> isEmpty |> Bool.not
 
 before : Queue a, Queue a -> Queue a
 before = \@Queue l1, @Queue l2 ->
     @Queue (l1 |> List.concat l2)
 
 expect 
-    queue1 = new {} |> enque 1
-    queue2 = new {} |> enque 2
+    queue1 = empty {} |> enque 1
+    queue2 = empty {} |> enque 2
     queue1 
         |> before queue2
         |> peek
@@ -100,7 +100,7 @@ toList: Queue a -> List a
 toList = \@Queue lst -> lst
 
 expect 
-    new {} |> enque 3 |> enque 2 |> enque 1 |> toList == [3,2,1]
+    empty {} |> enque 3 |> enque 2 |> enque 1 |> toList == [3,2,1]
 
 process: Queue a, state, (state, a -> state) -> state
 process = \@Queue lst, s, f ->
