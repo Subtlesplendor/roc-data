@@ -1,3 +1,20 @@
+## #Queue
+## A simple (Queue)[https://en.wikipedia.org/wiki/Queue_(abstract_data_type)] data type. A `Queue` is like a `List` but with a reduced API. Items can only be accessed at the start of the `Queue`, and only added at the end. Construct a `Queue` either by calling `fromList` or by creating an `empty` `Queue` and `enque` elements at the end. Access the first element using `deque`.
+## Example:
+##```
+##PrintJob = Nat
+##Jobs = Queue PrintJob
+##
+##addPrintJob: Queue -> Queue, 
+##addPrintJob = \queue ->
+##    queue |> Queue.enque
+##
+##nextPrintJob: Queue -> Result {remaining: Queue PrintJob, job: PrintJob} NoJobsAvailable
+##nextPrintJob = \jobQueue ->
+##    when jobQueue |> Queue.deque is 
+##        Err QueueWasEmpty -> Err NoJobsAvailable
+##        Ok {queue, elem} -> Ok {remaining: queue, job: elem }
+##```
 interface Data.Queue 
     exposes [Queue, empty, size, peek, enque, deque, #Principals
              fromList, toList, isEmpty, before, process #Ergonomics
