@@ -1,4 +1,6 @@
-# roc-data
-The aim is for this package to contain common datatypes.
+# Useful data tupes
+The aim is for this package to contain common datatypes. Currently it only contains Stack and Queue.
 
-Currently it only contains Stack.
+
+## Documentation
+See (subtlesplendor.github.io/roc-data/)[https://subtlesplendor.github.io/roc-data/] for more info.

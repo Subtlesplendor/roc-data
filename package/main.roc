@@ -1,7 +1,7 @@
-package "data"
+package "Data"
     exposes [
-        Data.Stack,
-        Data.NonEmpty,
-        Data.Queue
+        Stack,
+        Queue,        
+        #NonEmpty,
     ]
     packages {}
