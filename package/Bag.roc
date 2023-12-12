@@ -1,4 +1,4 @@
-interface Data.Bag 
+interface Bag 
     exposes [Bag, empty, single, insert, repeat, size, remove, removeAll,
         isEmpty, contains, count, toList, fromList, fromSet, walk, walkUntil, union,
         intersection, difference, join, includedIn, map, joinMap, scaleWith,

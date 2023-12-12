@@ -4,7 +4,7 @@
 ## `NonEmpty` is likely to be less performant than the built-in List, but is more ergonomic for cases where existence of data is guaranteed.
 ## There are two ways to construct a `NonEmpty`. It can either be constructed using `fromList`, or `single`.
 ## `NonEmpty` defines many of the same functions as `List`. Certain functions like `drop` and `keep` are more suited to regular `List`s, and are not implemented for `NonEmpty`. To access them it is best to cast back to a list using `toList`.
-interface Data.NonEmpty 
+interface NonEmpty 
     exposes [toList, fromList, single, len, first, last, addOneAndRepeat, min, max]
     imports []
 

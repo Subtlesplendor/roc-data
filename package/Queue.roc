@@ -14,7 +14,7 @@
 ##        Err QueueWasEmpty -> Err NoJobsAvailable
 ##        Ok {queue, elem} -> Ok {remaining: queue, job: elem }
 ##```
-interface Data.Queue 
+interface Queue 
     exposes [Queue, empty, size, peek, enque, deque, #Principals
              fromList, isEmpty, inFrontOf, process #Ergonomics
              ]

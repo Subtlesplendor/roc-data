@@ -11,7 +11,7 @@
 ##        Ok {stack, elem} ->
 ##            {current: elem, back: stack, forward: forward |> Stack.push current}
 ##```
-interface Data.Stack 
+interface Stack 
     exposes [Stack, empty, size, peek, push, pop, #Principals
              fromList, isEmpty, onTopOf, descend #Ergonomics
              ]
