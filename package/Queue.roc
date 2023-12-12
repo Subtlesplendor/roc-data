@@ -1,6 +1,6 @@
-##  #Queue
-##  A simple (Queue)[https://en.wikipedia.org/wiki/Queue_(abstract_data_type)] data type. A `Queue` is like a `List` but with a reduced API. Items can only be accessed at the start of the `Queue`, and only added at the end. Construct a `Queue` either by calling `fromList` or by creating an `empty` `Queue` and `enque` elements at the end. Access the first element using `deque`.
-##  Example:
+## #Queue
+## A simple (Queue)[https://en.wikipedia.org/wiki/Queue_(abstract_data_type)] data type. A `Queue` is like a `List` but with a reduced API. Items can only be accessed at the start of the `Queue`, and only added at the end. Construct a `Queue` either by calling `fromList` or by creating an `empty` `Queue` and `enque` elements at the end. Access the first element using `deque`.
+## Example:
 ## ```
 ## Jobs = Queue PrintJob
 ## 
@@ -25,7 +25,7 @@ Queue a := List a implements [Eq]
 
 # separator
 
-##  ## Basic Primitives
+## ##Basic Primitives
 
 # separator
 
@@ -86,14 +86,14 @@ expect [1,2,3] |> fromList == empty {} |> enque 1 |> enque 2 |> enque 3
 
 #separator
 
-##  Ergonomics
-##  The following functions are not part of the traditional definition of a queue.
+## Ergonomics
+## The following functions are not part of the traditional definition of a queue.
 
 
-##  Determine the number of items in the queue.
+## Determine the number of items in the queue.
 ## ```
-##  expect Queue.empty {} |> Queue.size == 0
-##  expect Queue.empty {} |> Queue.enque "a" |> Queue.enque "b" |> Queue.size == 2
+## expect Queue.empty {} |> Queue.size == 0
+## expect Queue.empty {} |> Queue.enque "a" |> Queue.enque "b" |> Queue.size == 2
 ## ```
 size: Queue * -> Nat
 size = \@Queue lst ->
@@ -103,10 +103,10 @@ expect empty {} |> size == 0
 expect ["a", "b", "c"] |> fromList |> size == 3
 
 
-##  Peek at the first item in the queue.
+## Peek at the first item in the queue.
 ## ```
-##  expect Queue.empty {} |> Queue.peek == Err QueueWasEmpty 
-##  expect 
+## expect Queue.empty {} |> Queue.peek == Err QueueWasEmpty 
+## expect 
 ##      Queue.empty {} 
 ##         |> Queue.enque 1
 ##         |> Queue.enque 2

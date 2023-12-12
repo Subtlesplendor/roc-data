@@ -1,6 +1,6 @@
-##  #Stack
-##  A simple (Stack)[https://en.wikipedia.org/wiki/Stack_(abstract_data_type)] data type. A `Stack` is like a `List` but where only the top of the `Stack` accessible. Construct one either by calling `fromList` or by creating an `empty` `Stack` and `push`ing elements onto the stack. Access the top element using `pop`.
-##  Example:
+## #Stack
+## A simple (Stack)[https://en.wikipedia.org/wiki/Stack_(abstract_data_type)] data type. A `Stack` is like a `List` but where only the top of the `Stack` accessible. Construct one either by calling `fromList` or by creating an `empty` `Stack` and `push`ing elements onto the stack. Access the top element using `pop`.
+## Example:
 ## ```
 ## State = {current: Page, back: Stack Page, forward: Stack Page }
 ## goBack: State -> State
@@ -19,7 +19,7 @@ interface Stack
 
 Stack a := List a implements [Eq]
 
-##  ## Basic Primitives
+## ## Basic Primitives
 
 # separator
 
@@ -87,10 +87,10 @@ size = \@Stack lst ->
 expect empty {} |> size == 0
 expect empty {} |> push "a" |> push "b" |> size == 2
 
-##  Peek at the top item of the stack.
+## Peek at the top item of the stack.
 ## ```
-##  expect Stack.empty {} |> Stack.peek == Err StackWasEmpty 
-##  expect 
+## expect Stack.empty {} |> Stack.peek == Err StackWasEmpty 
+## expect 
 ##      Stack.empty {} 
 ##         |> Stack.push 1
 ##         |> Stack.push 2
