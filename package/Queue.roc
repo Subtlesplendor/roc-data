@@ -1,5 +1,5 @@
 ## #Queue
-## A simple (Queue)[https://en.wikipedia.org/wiki/Queue_(abstract_data_type)] data type. A `Queue` is like a `List` but with a reduced API. Items can only be accessed at the start of the `Queue`, and only added at the end. Construct a `Queue` either by calling `fromList` or by creating an `empty` `Queue` and `enque` elements at the end. Access the first element using `deque`.
+## A `Queue` is like a `List` but with a reduced interface. Items can only be accessed at the start of the `Queue`, and only added at the end. Construct a `Queue` either by calling `fromList` or by creating an `empty` `Queue` and `enque` elements at the end. Access the first element using `deque`.
 ## Example:
 ## ```
 ## Jobs = Queue PrintJob

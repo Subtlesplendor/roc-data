@@ -1,5 +1,5 @@
 ## #Stack
-## A simple (Stack)[https://en.wikipedia.org/wiki/Stack_(abstract_data_type)] data type. A `Stack` is like a `List` but where only the top of the `Stack` accessible. Construct one either by calling `fromList` or by creating an `empty` `Stack` and `push`ing elements onto the stack. Access the top element using `pop`.
+## A `Stack` is like a `List` but with a reduced interface. Only the top of the `Stack` accessible. Construct one either by calling `fromList` or by creating an `empty` `Stack` and `push`ing elements onto the stack. Access the top element using `pop`.
 ## Example:
 ## ```
 ## State = {current: Page, back: Stack Page, forward: Stack Page }
