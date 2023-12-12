@@ -5,21 +5,18 @@
 ## There are two ways to construct a `NonEmptyList`. It can either be constructed using `fromList`, or `single`.
 ## `NonEmptyList` defines many of the same functions as `List`. Certain functions like `drop` and `keep` are more suited to regular `List`s, and are not implemented for `NonEmptyList`. To access them it is best to cast back to a list using `toList`.
 interface NonEmptyList 
-    exposes [toList, fromList, single, len, first, last, addOneAndRepeat, min, max]
+    exposes [
+        toList, fromList, single, len, first, last, addOneAndRepeat, min, max,
+        join, walkFrom, countIf, map, walkFromUntil, walkBackwardsUntil, all, walkWithIndex, any, walk, walkUntil, walkBackwards, contains, product, sum, reverse
+    ]
     imports []
 
 
-## The type
-NonEmptyList a := {body: List a, tail: a} implements [Eq { isEq: isEq }]
-
-isEq : NonEmptyList a, NonEmptyList a -> Bool 
-    where a implements Eq
-isEq = \nonemptyA, nonEmptyB ->
-    nonemptyA |> toList == nonEmptyB |> toList
+NonEmptyList a := {body: List a, tail: a} implements [Eq]
 
 ## Construct a `NonEmptyList` from a list. Returns `ListWasEmpty` if the input list is empty.
 ## ```
-## NonEmptyList.fromList [1, 2, 3]
+## [1, 2, 3] |> NonEmptyList.fromList 
 ##
 ## expect [] |> NonEmptyList.fromList == Err ListWasEmpty
 ## ```
