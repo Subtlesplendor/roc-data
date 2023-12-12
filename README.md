@@ -3,4 +3,4 @@ The aim is for this package to contain common datatypes. Currently it only conta
 
 
 ## Documentation
-See (subtlesplendor.github.io/roc-data/)[https://subtlesplendor.github.io/roc-data/] for more info.
+See https://subtlesplendor.github.io/roc-data/ for more info.
