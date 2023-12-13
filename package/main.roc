@@ -1,8 +1,8 @@
 package "Data"
     exposes [
-        #Stack,
-        #Queue,        
-        NonEmptyList2,
+        Stack,
+        Queue,        
+        NonEmptyList,
         #Bag
     ]
     packages {}
