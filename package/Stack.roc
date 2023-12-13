@@ -1,4 +1,3 @@
-## #Stack
 ## A `Stack` is like a `List` but with a reduced interface. Only the top of the `Stack` accessible. Construct one either by calling `fromList` or by creating an `empty` `Stack` and `push`ing elements onto the stack. Access the top element using `pop`.
 ## Example:
 ## ```

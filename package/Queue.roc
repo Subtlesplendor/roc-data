@@ -1,4 +1,3 @@
-## #Queue
 ## A `Queue` is like a `List` but with a reduced interface. Items can only be accessed at the start of the `Queue`, and only added at the end. Construct a `Queue` either by calling `fromList` or by creating an `empty` `Queue` and `enque` elements at the end. Access the first element using `deque`.
 ## Example:
 ## ```
