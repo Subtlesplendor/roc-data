@@ -72,16 +72,13 @@ fromList = \lst ->
     Ok (@NonEmptyList { body, foot })
 
 expect [] |> fromList == Err ListWasEmpty
-
-expect
-    expect
-        1 == 1
-
-    [] |> fromList == Err ListWasEmpty
+expect [1, 2, 3] |> fromList == Ok (@NonEmptyList { body: [1, 2], foot: 3 })
 
 toList : NonEmptyList a -> List a
 toList = \@NonEmptyList { body, foot } ->
     body |> List.append foot
+
+expect single "a" |> append "b" |> toList == ["a", "b"]
 
 get : NonEmptyList a, Nat -> Result a [OutOfBounds]
 get = \nonempty, n ->
@@ -221,6 +218,8 @@ expect @NonEmptyList { body: ["a", "b"], foot: "c" } |> last == "c"
 single : a -> NonEmptyList a
 single = \x -> @NonEmptyList { body: [], foot: x }
 
+expect single "a" == @NonEmptyList {body: [], foot: "a"}
+
 ## Add one occurence of an element `x` and then repeat it `n` times.
 ## ```
 ## expect x |> NonEmptyList.addOneAndRepeat 5 |> NonEmptyList.len == 6
@@ -228,6 +227,9 @@ single = \x -> @NonEmptyList { body: [], foot: x }
 addOneAndRepeat : a, Nat -> NonEmptyList a
 addOneAndRepeat = \x, n ->
     @NonEmptyList { body: x |> List.repeat n, foot: x }
+
+expect "a" |> addOneAndRepeat 10 |> len == 11
+expect "a" |> addOneAndRepeat 3 == @NonEmptyList {body: ["a", "a", "a"], foot: "a"}    
 
 reverse : NonEmptyList a -> NonEmptyList a
 reverse = \nonempty ->
@@ -239,6 +241,9 @@ reverse = \nonempty ->
                 body: rest |> List.append foot |> List.reverse,
                 foot: head,
             }
+
+expect 3 |> single |> reverse == 3 |> single            
+expect @NonEmptyList {body: [1,2], foot: 3} |> reverse == @NonEmptyList {body: [3, 2], foot: 1}            
 
 join : NonEmptyList (NonEmptyList a) -> NonEmptyList a
 join = \@NonEmptyList { body, foot } ->
