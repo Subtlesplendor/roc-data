@@ -218,7 +218,7 @@ expect @NonEmptyList { body: ["a", "b"], foot: "c" } |> last == "c"
 single : a -> NonEmptyList a
 single = \x -> @NonEmptyList { body: [], foot: x }
 
-expect single "a" == @NonEmptyList {body: [], foot: "a"}
+expect single "a" == @NonEmptyList { body: [], foot: "a" }
 
 ## Add one occurence of an element `x` and then repeat it `n` times.
 ## ```
@@ -229,7 +229,7 @@ addOneAndRepeat = \x, n ->
     @NonEmptyList { body: x |> List.repeat n, foot: x }
 
 expect "a" |> addOneAndRepeat 10 |> len == 11
-expect "a" |> addOneAndRepeat 3 == @NonEmptyList {body: ["a", "a", "a"], foot: "a"}    
+expect "a" |> addOneAndRepeat 3 == @NonEmptyList { body: ["a", "a", "a"], foot: "a" }
 
 reverse : NonEmptyList a -> NonEmptyList a
 reverse = \nonempty ->
@@ -242,8 +242,8 @@ reverse = \nonempty ->
                 foot: head,
             }
 
-expect 3 |> single |> reverse == 3 |> single            
-expect @NonEmptyList {body: [1,2], foot: 3} |> reverse == @NonEmptyList {body: [3, 2], foot: 1}            
+expect 3 |> single |> reverse == 3 |> single
+expect @NonEmptyList { body: [1, 2], foot: 3 } |> reverse == @NonEmptyList { body: [3, 2], foot: 1 }
 
 join : NonEmptyList (NonEmptyList a) -> NonEmptyList a
 join = \@NonEmptyList { body, foot } ->
@@ -251,17 +251,50 @@ join = \@NonEmptyList { body, foot } ->
     |> List.walkBackwards foot \state, elem ->
         elem |> concat state
 
+expect
+    res =
+        nonemptyA <- [1, 2, 3] |> fromList |> Result.try
+        nonemptyB <- [4, 5, 6] |> fromList |> Result.try
+        nonemptyC <- [7, 8, 9] |> fromList |> Result.try
+        nonemptyA |> single |> append nonemptyB |> append nonemptyC |> join |> Ok
+    res
+    |> Result.map \nonempty ->
+        nonempty == @NonEmptyList { body: [1, 2, 3, 4, 5, 6, 7, 8], foot: 9 }
+    |> Result.withDefault Bool.false
+
 contains : NonEmptyList a, a -> Bool where a implements Eq
 contains = \nonempty, x ->
     nonempty |> toList |> List.contains x
+
+expect 1 |> single |> contains 1
+expect 1 |> single |> contains 2 |> Bool.not
+expect @NonEmptyList { body: [1, 2], foot: 3 } |> contains 3
+expect
+    nonempty = @NonEmptyList { body: [1, 2], foot: 3 }
+    (nonempty |> contains 1)
+    && (nonempty |> contains 2)
+    && (nonempty |> contains 3)
+    && !(nonempty |> contains 4)
 
 walk : NonEmptyList elem, state, (state, elem -> state) -> state
 walk = \nonempty, state, func ->
     nonempty |> toList |> List.walk state func
 
+expect
+    @NonEmptyList { body: ["a", "b"], foot: "c" }
+    |> walk "" \state, elem ->
+        state |> Str.concat elem
+    == "abc"
+
 walkWithIndex : NonEmptyList elem, state, (state, elem, Nat -> state) -> state
 walkWithIndex = \nonempty, state, func ->
     nonempty |> toList |> List.walkWithIndex state func
+
+expect
+    @NonEmptyList { body: ["a", "b"], foot: "c" }
+    |> walkWithIndex "" \state, elem, index ->
+        state |> Str.concat elem |> Str.concat (Num.toStr index)
+    == "a0b1c2"
 
 walkBackwards : NonEmptyList elem, state, (state, elem -> state) -> state
 walkBackwards = \nonempty, state, func ->
