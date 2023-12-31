@@ -1,13 +1,19 @@
 ##  #NonEmptyList
 ##
 ## `NonEmptyList` is a non-empty list, useful for modeling data with one or more occurence.
-## `NonEmptyList` is likely to be less performant than the built-in List, but is more ergonomic for cases where existence of data is guaranteed.
+## Example:
+## ```
+## Order = { items : NonEmptyList Item,
+## customer : CustomerInfo,
+## Ad }
+## ```
 ## There are two ways to construct a `NonEmptyList`. It can either be constructed using `fromList`, or `single`.
+## This API implements many of the functions in the built-in `List`. For the functions that are missing, you can drop down to a regular `List` using `toList`.
 interface NonEmptyList
     exposes [
         fromList,
         toList,
-        addOneAndRepeat,
+        singleThenRepeat,
         get,
         replace,
         set,
@@ -65,6 +71,9 @@ interface NonEmptyList
 
 NonEmptyList a := { body : List a, foot : a } implements [Eq]
 
+## ## Constructors
+
+## Construct a non-empty list from a `List`. Returns `ListWasEmpty` if the original list was empty.
 fromList : List a -> Result (NonEmptyList a) [ListWasEmpty]
 fromList = \lst ->
     foot <- lst |> List.last |> Result.try
@@ -74,11 +83,86 @@ fromList = \lst ->
 expect [] |> fromList == Err ListWasEmpty
 expect [1, 2, 3] |> fromList == Ok (@NonEmptyList { body: [1, 2], foot: 3 })
 
+## Constructs a "singleton" `NonEmptyList` from a single element.
+single : a -> NonEmptyList a
+single = \x -> @NonEmptyList { body: [], foot: x }
+
+expect single "a" == @NonEmptyList { body: [], foot: "a" }
+
+## Transform the non-empty list to a list.
+## ```
+## expect NonEmptyList.single "a" |> NonEmptyList.append "b" |> NonEmptyList.toList == ["a", "b"]
+## ```
 toList : NonEmptyList a -> List a
 toList = \@NonEmptyList { body, foot } ->
     body |> List.append foot
 
 expect single "a" |> append "b" |> toList == ["a", "b"]
+
+## ## Useful Functions
+## These functions are more ergonomic versions of the same functions in the `List` API.
+## Because the list is non-empty, these are always guaranteed to return a value.
+
+# separator
+
+last : NonEmptyList a -> a
+last = \@NonEmptyList { foot } -> foot
+
+expect @NonEmptyList { body: ["a", "b"], foot: "c" } |> last == "c"
+
+first : NonEmptyList a -> a
+first = \@NonEmptyList { body, foot } ->
+    when body is
+        [head, ..] -> head
+        [] -> foot
+
+min : NonEmptyList (Num a) -> Num a
+min = \@NonEmptyList { body, foot } ->
+    body |> List.walk foot Num.min
+
+expect @NonEmptyList { body: [2, 1], foot: 3 } |> min == 1
+
+max : NonEmptyList (Num a) -> Num a
+max = \@NonEmptyList { body, foot } ->
+    body |> List.walk foot Num.max
+
+expect @NonEmptyList { body: [2, 1], foot: 3 } |> max == 3
+
+# separator
+
+## ## Modified Functions
+## The following functions are slightly modified from the usual `List` API.
+
+## Add one occurence of an element and then repeat it the specified number of times.
+## ```
+## expect "a" |> NonEmptyList.singleThenRepeat 5 |> NonEmptyList.len == 6
+## ```
+singleThenRepeat : a, Nat -> NonEmptyList a
+singleThenRepeat = \x, n ->
+    @NonEmptyList { body: x |> List.repeat n, foot: x }
+
+expect "a" |> singleThenRepeat 10 |> len == 11
+expect "a" |> singleThenRepeat 3 == @NonEmptyList { body: ["a", "a", "a"], foot: "a" }
+
+## Take the first element and then the following specified number of elements.
+takeFirstAnd : NonEmptyList elem, Nat -> NonEmptyList elem
+takeFirstAnd = \nonempty, n ->
+    length = len nonempty
+    (@NonEmptyList { body }) = nonempty
+    when body is
+        [] -> nonempty
+        lst if (List.len lst) + 1 >= length -> nonempty
+        [.. as listBody, end] ->
+            @NonEmptyList { body: listBody |> List.takeFirst n, foot: end }
+
+## Take the last element and then the preceeding specified number of elements
+takeLastAnd : NonEmptyList elem, Nat -> NonEmptyList elem
+takeLastAnd = \@NonEmptyList { body, foot }, n ->
+    @NonEmptyList { body: body |> List.takeLast n, foot }
+
+# separator
+
+## ## Just Like `List`
 
 get : NonEmptyList a, Nat -> Result a [OutOfBounds]
 get = \nonempty, n ->
@@ -105,6 +189,14 @@ replace = \@NonEmptyList { body, foot }, n, newVal ->
             nonemptylist: @NonEmptyList { body: list, foot },
             value,
         }
+
+expect
+    { nonemptylist, value } = @NonEmptyList { body: ["a", "b", "c"], foot: "d" } |> replace 2 "e"
+    nonemptylist == @NonEmptyList { body: ["a", "b", "e"], foot: "d" } && value == "c"
+
+expect
+    { nonemptylist, value } = @NonEmptyList { body: ["a", "b", "c"], foot: "d" } |> replace 4 "e"
+    nonemptylist == @NonEmptyList { body: ["a", "b", "c"], foot: "d" } && value == "e"
 
 set : NonEmptyList a, Nat, a -> NonEmptyList a
 set = \nonempty, n, newVal ->
@@ -186,10 +278,6 @@ expect
     res = Err OutOfBounds
     @NonEmptyList { body: [1, 2], foot: 3 } |> prependIfOk res == @NonEmptyList { body: [1, 2], foot: 3 }
 
-## Gives the length of the non-empty list.
-## ```
-## expect single "a" |> NonEmptyList.len == 1
-## ```
 len : NonEmptyList * -> Nat
 len = \nonempty ->
     nonempty |> toList |> List.len
@@ -208,28 +296,6 @@ expect
     expected = @NonEmptyList { body: ["a", "b", "c", "d", "e"], foot: "f" }
     actual = nonemptyA |> concat nonemptyB
     actual == expected
-
-last : NonEmptyList a -> a
-last = \@NonEmptyList { foot } -> foot
-
-expect @NonEmptyList { body: ["a", "b"], foot: "c" } |> last == "c"
-
-## Constructs a "singleton" `NonEmptyList` from a single element.
-single : a -> NonEmptyList a
-single = \x -> @NonEmptyList { body: [], foot: x }
-
-expect single "a" == @NonEmptyList { body: [], foot: "a" }
-
-## Add one occurence of an element `x` and then repeat it `n` times.
-## ```
-## expect x |> NonEmptyList.addOneAndRepeat 5 |> NonEmptyList.len == 6
-## ```
-addOneAndRepeat : a, Nat -> NonEmptyList a
-addOneAndRepeat = \x, n ->
-    @NonEmptyList { body: x |> List.repeat n, foot: x }
-
-expect "a" |> addOneAndRepeat 10 |> len == 11
-expect "a" |> addOneAndRepeat 3 == @NonEmptyList { body: ["a", "a", "a"], foot: "a" }
 
 reverse : NonEmptyList a -> NonEmptyList a
 reverse = \nonempty ->
@@ -300,45 +366,146 @@ walkBackwards : NonEmptyList elem, state, (state, elem -> state) -> state
 walkBackwards = \nonempty, state, func ->
     nonempty |> toList |> List.walkBackwards state func
 
+expect
+    @NonEmptyList { body: ["a", "b"], foot: "c" }
+    |> walkBackwards "" \state, elem ->
+        state |> Str.concat elem
+    == "cba"
+
 walkUntil : NonEmptyList elem, state, (state, elem -> [Continue state, Break state]) -> state
 walkUntil = \nonempty, state, func ->
     nonempty |> toList |> List.walkUntil state func
+
+expect
+    nonemptylist = @NonEmptyList { body: ["a", "b", ""], foot: "c" }
+    nonemptylist
+    |> walkUntil "" \state, elem ->
+        when elem is
+            "" -> Break state
+            s -> Continue (state |> Str.concat s)
+    == "ab"
+
+expect
+    nonemptylist = @NonEmptyList { body: ["a", "b"], foot: "c" }
+    nonemptylist
+    |> walkUntil "" \state, elem ->
+        when elem is
+            "" -> Break state
+            s -> Continue (state |> Str.concat s)
+    == "abc"
 
 walkBackwardsUntil : NonEmptyList elem, state, (state, elem -> [Continue state, Break state]) -> state
 walkBackwardsUntil = \nonempty, state, func ->
     nonempty |> toList |> List.walkBackwardsUntil state func
 
+expect
+    nonemptylist = @NonEmptyList { body: ["a", "", "b"], foot: "c" }
+    nonemptylist
+    |> walkBackwardsUntil "" \state, elem ->
+        when elem is
+            "" -> Break state
+            s -> Continue (state |> Str.concat s)
+    == "cb"
+
+expect
+    nonemptylist = @NonEmptyList { body: ["a", "b"], foot: "c" }
+    nonemptylist
+    |> walkBackwardsUntil "" \state, elem ->
+        when elem is
+            "" -> Break state
+            s -> Continue (state |> Str.concat s)
+    == "cba"
+
 walkFrom : NonEmptyList elem, Nat, state, (state, elem -> state) -> state
 walkFrom = \nonempty, n, state, func ->
     nonempty |> toList |> List.walkFrom n state func
+
+expect
+    nonemptylist = @NonEmptyList { body: ["a", "b", "c"], foot: "d" }
+    nonemptylist
+    |> walkFrom 2 "" \state, elem ->
+        state |> Str.concat elem
+    == "cd"
 
 walkFromUntil : NonEmptyList elem, Nat, state, (state, elem -> [Continue state, Break state]) -> state
 walkFromUntil = \nonempty, n, state, func ->
     nonempty |> toList |> List.walkFromUntil n state func
 
+expect
+    nonemptylist = @NonEmptyList { body: ["", "b", "c", ""], foot: "d" }
+    nonemptylist
+    |> walkFromUntil 1 "" \state, elem ->
+        when elem is
+            "" -> Break state
+            s -> Continue (state |> Str.concat s)
+    == "bc"
+
+expect
+    nonemptylist = @NonEmptyList { body: ["", "b", "c"], foot: "d" }
+    nonemptylist
+    |> walkFromUntil 1 "" \state, elem ->
+        when elem is
+            "" -> Break state
+            s -> Continue (state |> Str.concat s)
+    == "bcd"
+
 sum : NonEmptyList (Num a) -> Num a
 sum = \nonempty ->
     nonempty |> toList |> List.sum
+
+expect
+    nonemptylist = @NonEmptyList { body: [1, 0, -2], foot: 3 }
+    nonemptylist |> sum == 2
 
 product : NonEmptyList (Num a) -> Num a
 product = \nonempty ->
     nonempty |> toList |> List.product
 
+expect
+    nonemptylist = @NonEmptyList { body: [1, 2, -2], foot: 3 }
+    nonemptylist |> product == -12
+
 any : NonEmptyList a, (a -> Bool) -> Bool
 any = \nonempty, pred ->
     nonempty |> toList |> List.any pred
+
+expect
+    nonemptylist = @NonEmptyList { body: ["a", "", "c"], foot: "d" }
+    nonemptylist |> any Str.isEmpty
+
+expect
+    nonemptylist = @NonEmptyList { body: ["a", "b", "c"], foot: "d" }
+    nonemptylist |> any Str.isEmpty |> Bool.not
 
 all : NonEmptyList a, (a -> Bool) -> Bool
 all = \nonempty, pred ->
     nonempty |> toList |> List.all pred
 
+expect
+    nonemptylist = @NonEmptyList { body: ["a", "", "c"], foot: "d" }
+    nonemptylist |> all Str.isEmpty |> Bool.not
+
+expect
+    nonemptylist = @NonEmptyList { body: [1, 2, 3], foot: 4 }
+    nonemptylist |> all (\x -> x > 0)
+
 countIf : NonEmptyList a, (a -> Bool) -> Nat
 countIf = \nonempty, pred ->
     nonempty |> toList |> List.countIf pred
 
+expect
+    nonemptylist = @NonEmptyList { body: ["a", "", "c"], foot: "d" }
+    nonemptylist |> countIf Str.isEmpty == 1
+
+expect
+    nonemptylist = @NonEmptyList { body: [1, 0, 3], foot: 0 }
+    nonemptylist |> countIf (\x -> x > 0) == 2
+
 map : NonEmptyList a, (a -> b) -> NonEmptyList b
 map = \@NonEmptyList { body, foot }, func ->
     @NonEmptyList { body: body |> List.map func, foot: func foot }
+
+expect @NonEmptyList { body: [1, 0, 3], foot: 0 } |> map (\x -> x + 1) == @NonEmptyList { body: [2, 1, 4], foot: 1 }
 
 map2 : NonEmptyList a, NonEmptyList b, (a, b -> c) -> NonEmptyList c
 map2 = \nonemptyA, nonemptyB, func ->
@@ -348,6 +515,11 @@ map2 = \nonemptyA, nonemptyB, func ->
         Ok nonempty -> nonempty
         Err _ -> crash "this should never happen"
 
+expect
+    nonemptyA = @NonEmptyList { body: [1, 2, 3], foot: 4 }
+    nonemptyB = @NonEmptyList { body: ["a", "b"], foot: "c" }
+    nonemptyA |> map2 nonemptyB (\n, s -> (n, s)) == @NonEmptyList { body: [(1, "a"), (2, "b")], foot: (3, "c") }
+
 map3 : NonEmptyList a, NonEmptyList b, NonEmptyList c, (a, b, c -> d) -> NonEmptyList d
 map3 = \nonemptyA, nonemptyB, nonemptyC, func ->
     listA = nonemptyA |> toList
@@ -356,6 +528,12 @@ map3 = \nonemptyA, nonemptyB, nonemptyC, func ->
     when List.map3 listA listB listC func |> fromList is
         Ok nonempty -> nonempty
         Err _ -> crash "this should never happen"
+
+expect
+    nonemptyA = @NonEmptyList { body: [1, 2, 3], foot: 4 }
+    nonemptyB = @NonEmptyList { body: ["a", "b"], foot: "c" }
+    nonemptyC = @NonEmptyList { body: [10], foot: 11 }
+    nonemptyA |> map3 nonemptyB nonemptyC (\n1, s, n2 -> (n1, s, n2)) == @NonEmptyList { body: [(1, "a", 10)], foot: (2, "b", 11) }
 
 map4 : NonEmptyList a, NonEmptyList b, NonEmptyList c, NonEmptyList d, (a, b, c, d -> e) -> NonEmptyList e
 map4 = \nonemptyA, nonemptyB, nonemptyC, nonemptyD, func ->
@@ -367,10 +545,25 @@ map4 = \nonemptyA, nonemptyB, nonemptyC, nonemptyD, func ->
         Ok nonempty -> nonempty
         Err _ -> crash "this should never happen"
 
+expect
+    nonemptyA = @NonEmptyList { body: [1, 2, 3], foot: 4 }
+    nonemptyB = @NonEmptyList { body: ["a", "b"], foot: "c" }
+    nonemptyC = @NonEmptyList { body: [10], foot: 11 }
+    nonemptyD = @NonEmptyList { body: [], foot: "d" }
+    nonemptyA |> map4 nonemptyB nonemptyC nonemptyD (\n, s1, m, s2 -> (n, s1, m, s2)) == @NonEmptyList { body: [], foot: (1, "a", 10, "d") }
+
 mapWithIndex : NonEmptyList a, (a, Nat -> b) -> NonEmptyList b
 mapWithIndex = \@NonEmptyList { body, foot }, func ->
     n = body |> List.len
     @NonEmptyList { body: body |> List.mapWithIndex func, foot: foot |> func n }
+
+expect
+    nonempty = @NonEmptyList { body: ["a", "b"], foot: "c" }
+    actual =
+        nonempty
+        |> mapWithIndex \s, n ->
+            s |> Str.concat (Num.toStr n)
+    actual == @NonEmptyList { body: ["a0", "b1"], foot: "c2" }
 
 sortWith : NonEmptyList a, (a, a -> [LT, EQ, GT]) -> NonEmptyList a
 sortWith = \nonempty, comparer ->
@@ -378,17 +571,40 @@ sortWith = \nonempty, comparer ->
         Ok sorted -> sorted
         Err _ -> crash "this should never happen"
 
+expect
+    nonempty = @NonEmptyList { body: [1, 3], foot: 2 }
+    actual =
+        nonempty
+        |> sortWith \x1, x2 ->
+            if x1 > x2 then
+                GT
+            else if x1 == x2 then
+                EQ
+            else
+                LT
+    actual == @NonEmptyList { body: [1, 2], foot: 3 }
+
 sortAsc : NonEmptyList (Num a) -> NonEmptyList (Num a)
 sortAsc = \nonempty ->
     when nonempty |> toList |> List.sortAsc |> fromList is
         Ok sorted -> sorted
         Err _ -> crash "this should never happen"
 
+expect
+    nonempty = @NonEmptyList { body: [1, 3], foot: 2 }
+    actual = nonempty |> sortAsc
+    actual == @NonEmptyList { body: [1, 2], foot: 3 }
+
 sortDesc : NonEmptyList (Num a) -> NonEmptyList (Num a)
 sortDesc = \nonempty ->
     when nonempty |> toList |> List.sortDesc |> fromList is
         Ok sorted -> sorted
         Err _ -> crash "this should never happen"
+
+expect
+    nonempty = @NonEmptyList { body: [1, 3], foot: 2 }
+    actual = nonempty |> sortDesc
+    actual == @NonEmptyList { body: [3, 2], foot: 1 }
 
 swap : NonEmptyList a, Nat, Nat -> NonEmptyList a
 swap = \nonempty, nA, nB ->
@@ -398,57 +614,104 @@ swap = \nonempty, nA, nB ->
         nonempty |> set nB elemA |> set nA elemB |> Ok
     res |> Result.withDefault nonempty
 
-first : NonEmptyList a -> a
-first = \@NonEmptyList { body, foot } ->
-    when body is
-        [head, ..] -> head
-        [] -> foot
+expect
+    nonempty = @NonEmptyList { body: [1, 3], foot: 2 }
+    actual = nonempty |> swap 0 1
+    actual == @NonEmptyList { body: [3, 1], foot: 2 }
 
-takeFirstAnd : NonEmptyList elem, Nat -> NonEmptyList elem
-takeFirstAnd = \nonempty, n ->
-    length = len nonempty
-    (@NonEmptyList { body }) = nonempty
-    when body is
-        [] -> nonempty
-        lst if (List.len lst) + 1 >= length -> nonempty
-        [.. as listBody, end] ->
-            @NonEmptyList { body: listBody |> List.takeFirst n, foot: end }
-
-takeLastAnd : NonEmptyList elem, Nat -> NonEmptyList elem
-takeLastAnd = \@NonEmptyList { body, foot }, n ->
-    @NonEmptyList { body: body |> List.takeLast n, foot }
-
-min : NonEmptyList (Num a) -> Num a
-min = \@NonEmptyList { body, foot } ->
-    body |> List.walk foot Num.min
-
-expect @NonEmptyList { body: [2, 1], foot: 3 } |> min == 1
-
-max : NonEmptyList (Num a) -> Num a
-max = \@NonEmptyList { body, foot } ->
-    body |> List.walk foot Num.max
-
-expect @NonEmptyList { body: [2, 1], foot: 3 } |> max == 3
+expect
+    nonempty = @NonEmptyList { body: [1, 3], foot: 2 }
+    actual = nonempty |> swap 0 4
+    actual == nonempty
 
 joinMap : NonEmptyList a, (a -> NonEmptyList b) -> NonEmptyList b
 joinMap = \nonempty, func ->
     nonempty |> map func |> join
 
+expect
+    nonempty = @NonEmptyList { body: [1, 3], foot: 2 }
+    actual = nonempty |> joinMap \x -> x |> singleThenRepeat 2
+    actual == @NonEmptyList { body: [1, 1, 1, 3, 3, 3, 2, 2], foot: 2 }
+
 findFirst : NonEmptyList elem, (elem -> Bool) -> Result elem [NotFound]
 findFirst = \nonempty, pred ->
     nonempty |> toList |> List.findFirst pred
+
+expect
+    nonempty = @NonEmptyList { body: [1, 3], foot: 2 }
+    res =
+        n <- nonempty |> findFirst (\x -> x > 2) |> Result.try
+        Ok (n == 3)
+    res |> Result.withDefault Bool.false
+
+expect
+    nonempty = @NonEmptyList { body: [1, 3], foot: 2 }
+    res =
+        error <- nonempty |> findFirst (\x -> x > 4) |> Result.onErr
+        Err (error == NotFound)
+    when res is
+        Ok _ -> Bool.false
+        Err b -> b
 
 findLast : NonEmptyList elem, (elem -> Bool) -> Result elem [NotFound]
 findLast = \nonempty, pred ->
     nonempty |> toList |> List.findLast pred
 
+expect
+    nonempty = @NonEmptyList { body: [1, 3], foot: 2 }
+    res =
+        n <- nonempty |> findLast (\x -> x > 1) |> Result.try
+        Ok (n == 2)
+    res |> Result.withDefault Bool.false
+
+expect
+    nonempty = @NonEmptyList { body: [1, 3], foot: 2 }
+    res =
+        error <- nonempty |> findLast (\x -> x > 4) |> Result.onErr
+        Err (error == NotFound)
+    when res is
+        Ok _ -> Bool.false
+        Err b -> b
+
 findFirstIndex : NonEmptyList elem, (elem -> Bool) -> Result Nat [NotFound]
 findFirstIndex = \nonempty, pred ->
     nonempty |> toList |> List.findFirstIndex pred
 
+expect
+    nonempty = @NonEmptyList { body: [1, 3], foot: 2 }
+    res =
+        n <- nonempty |> findFirstIndex (\x -> x > 2) |> Result.try
+        Ok (n == 1)
+    res |> Result.withDefault Bool.false
+
+expect
+    nonempty = @NonEmptyList { body: [1, 3], foot: 2 }
+    res =
+        error <- nonempty |> findFirstIndex (\x -> x > 4) |> Result.onErr
+        Err (error == NotFound)
+    when res is
+        Ok _ -> Bool.false
+        Err b -> b
+
 findLastIndex : NonEmptyList elem, (elem -> Bool) -> Result Nat [NotFound]
 findLastIndex = \nonempty, pred ->
     nonempty |> toList |> List.findLastIndex pred
+
+expect
+    nonempty = @NonEmptyList { body: [1, 3], foot: 2 }
+    res =
+        n <- nonempty |> findLastIndex (\x -> x > 1) |> Result.try
+        Ok (n == 2)
+    res |> Result.withDefault Bool.false
+
+expect
+    nonempty = @NonEmptyList { body: [1, 3], foot: 2 }
+    res =
+        error <- nonempty |> findLastIndex (\x -> x > 4) |> Result.onErr
+        Err (error == NotFound)
+    when res is
+        Ok _ -> Bool.false
+        Err b -> b
 
 intersperse : NonEmptyList elem, elem -> NonEmptyList elem
 intersperse = \nonempty, x ->
@@ -457,13 +720,44 @@ intersperse = \nonempty, x ->
         [] -> nonempty
         lst -> @NonEmptyList { body: lst |> List.intersperse x |> List.append x, foot }
 
+expect
+    nonempty = @NonEmptyList { body: [1, 3], foot: 2 }
+    nonempty
+    |> intersperse 0
+    == @NonEmptyList { body: [1, 0, 3, 0], foot: 2 }
+
+expect
+    single 1
+    |> intersperse 0
+    == @NonEmptyList { body: [], foot: 1 }
+
 startsWith : NonEmptyList elem, NonEmptyList elem -> Bool where elem implements Eq
 startsWith = \nonemptyA, nonemptyB ->
     nonemptyA |> toList |> List.startsWith (nonemptyB |> toList)
 
+expect
+    nonemptyA = single 1 |> append 0 |> append 2
+    nonemptyB = single 1 |> append 0
+    nonemptyA |> startsWith nonemptyB
+
+expect
+    nonemptyA = single 1 |> append 0 |> append 2
+    nonemptyB = single 1 |> append 2
+    nonemptyA |> startsWith nonemptyB |> Bool.not
+
 endsWith : NonEmptyList elem, NonEmptyList elem -> Bool where elem implements Eq
 endsWith = \nonemptyA, nonemptyB ->
     nonemptyA |> toList |> List.endsWith (nonemptyB |> toList)
+
+expect
+    nonemptyA = single 1 |> append 0 |> append 2
+    nonemptyB = single 0 |> append 2
+    nonemptyA |> endsWith nonemptyB
+
+expect
+    nonemptyA = single 1 |> append 0 |> append 2
+    nonemptyB = single 1 |> append 2
+    nonemptyA |> endsWith nonemptyB |> Bool.not
 
 chunksOf : NonEmptyList a, Nat -> List (NonEmptyList a)
 chunksOf = \nonempty, n ->
@@ -475,11 +769,35 @@ chunksOf = \nonempty, n ->
             Ok nonemptylist -> nonemptylist
             Err _ -> crash "This should never happen"
 
+expect
+    nonempty = single 1 |> append 0 |> append 2
+    nonempty |> chunksOf 0 == []
+
+expect
+    nonemptyA = single 1 |> append 0 |> append 2
+    actual1 = @NonEmptyList { body: [1], foot: 0 }
+    actual2 = @NonEmptyList { body: [], foot: 2 }
+    nonemptyA |> chunksOf 2 == [actual1, actual2]
+
 mapTry : NonEmptyList elem, (elem -> Result ok err) -> Result (NonEmptyList ok) err
 mapTry = \@NonEmptyList { body, foot }, func ->
     newBody <- body |> List.mapTry func |> Result.try
     newFoot <- foot |> func |> Result.try
     Ok (@NonEmptyList { body: newBody, foot: newFoot })
+
+expect
+    nonemptyA = single "1" |> append "0" |> append "2"
+    res =
+        nonempty <- nonemptyA |> mapTry Str.toDec |> Result.try
+        Ok (nonempty == @NonEmptyList { body: [1, 0], foot: 2 })
+    res |> Result.withDefault Bool.false
+
+expect
+    nonemptyA = single "1" |> append "a" |> append "2"
+    res =
+        nonempty <- nonemptyA |> mapTry Str.toDec |> Result.try
+        Ok (nonempty == @NonEmptyList { body: [1, 0], foot: 2 })
+    res |> Result.withDefault Bool.false |> Bool.not
 
 walkTry : NonEmptyList elem, state, (state, elem -> Result state err) -> Result state err
 walkTry = \nonempty, state, func ->
@@ -488,3 +806,21 @@ walkTry = \nonempty, state, func ->
         when currentRes is
             Err error -> Break (Err error)
             Ok newState -> Continue (func newState elem)
+
+expect
+    nonemptyA = single "1" |> append "0" |> append "2"
+    res =
+        nonemptyA
+        |> walkTry 0 \state, elem ->
+            n <- elem |> Str.toDec |> Result.try
+            state |> Num.add n |> Ok
+    res |> Result.map (\x -> x == 3) |> Result.withDefault Bool.false
+
+expect
+    nonemptyA = single "1" |> append "a" |> append "2"
+    res =
+        nonemptyA
+        |> walkTry 0 \state, elem ->
+            n <- elem |> Str.toDec |> Result.try
+            state |> Num.add n |> Ok
+    res == Err InvalidNumStr
