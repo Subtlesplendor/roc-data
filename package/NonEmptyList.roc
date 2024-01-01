@@ -1,5 +1,3 @@
-##  #NonEmptyList
-##
 ## `NonEmptyList` is a non-empty list, useful for modeling data with one or more occurence.
 ## Example:
 ## ```

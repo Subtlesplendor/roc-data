@@ -1,4 +1,3 @@
-## #Bag
 ## A bag is also known as a multiset. It is a modificaiton of the concept of a set which allows for multiple instances of each element. Each item then also has a multiplicity, defined by the number of instances of that item in the multiset.
 ## Example:
 ## ```
