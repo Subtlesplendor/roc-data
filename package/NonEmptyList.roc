@@ -69,7 +69,7 @@ interface NonEmptyList
 
 NonEmptyList a := { body : List a, foot : a } implements [Eq]
 
-## #Construct
+## # Construct
 
 ## Construct a non-empty list from a `List`. Returns `ListWasEmpty` if the original list was empty.
 fromList : List a -> Result (NonEmptyList a) [ListWasEmpty]
@@ -97,7 +97,7 @@ toList = \@NonEmptyList { body, foot } ->
 
 expect single "a" |> append "b" |> toList == ["a", "b"]
 
-## ## Useful Functions
+## # Useful Functions
 ## These functions are more ergonomic versions of the same functions in the `List` API.
 ## Because the list is non-empty, these are always guaranteed to return a value.
 
@@ -128,7 +128,7 @@ expect @NonEmptyList { body: [2, 1], foot: 3 } |> max == 3
 
 # separator
 
-## ## Modified Functions
+## # Modified Functions
 ## The following functions are slightly modified from the usual `List` API.
 
 ## Add one occurence of an element and then repeat it the specified number of times.

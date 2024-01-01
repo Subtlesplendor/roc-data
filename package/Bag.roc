@@ -54,7 +54,7 @@ Bag a := Dict a Nat implements [Eq]
 ##
 ## ```
 
-## ## Construct
+## # Construct
 
 ## Create an empty bag
 empty : {} -> Bag *
@@ -114,7 +114,7 @@ expect
 
 # separator
 
-## ## Combine
+## # Combine
 
 ## Join two bags together, adding the number of items in each bag.
 join : Bag k, Bag k -> Bag k
@@ -191,7 +191,7 @@ expect
     expectedBag = empty {} |> insert 1 "a"
     resultBag == expectedBag
 
-## ## Inspect
+## # Inspect
 
 ## Get the total number of items in the bag
 size : Bag * -> Nat
@@ -253,7 +253,7 @@ expect
     bagB = empty {} |> insert 4 "a" |> insert 1 "b" |> insert 1 "c"
     bagA |> includedIn bagB |> Bool.not
 
-## ## Modify
+## # Modify
 
 ## Insert a number of instances of an item into a bag
 insert : Bag a, Nat, a -> Bag a
