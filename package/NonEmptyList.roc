@@ -1,9 +1,9 @@
 ## `NonEmptyList` is a non-empty list, useful for modeling data with one or more occurence.
 ## Example:
 ## ```
-## Order = { items : NonEmptyList Item,
-## customer : CustomerInfo,
-## Ad }
+## Order : { items : NonEmptyList Item,
+##     customer : CustomerInfo
+## }
 ## ```
 ## There are two ways to construct a `NonEmptyList`. It can either be constructed using `fromList`, or `single`.
 ## This API implements many of the functions in the built-in `List`. For the functions that are missing, you can drop down to a regular `List` using `toList`.

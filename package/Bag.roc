@@ -1,22 +1,3 @@
-## A bag is also known as a multiset. It is a modificaiton of the concept of a set which allows for multiple instances of each element. Each item then also has a multiplicity, defined by the number of instances of that item in the multiset.
-## Example:
-## ```
-## Coin = Copper | Silver | Gold
-## Purse = Bag Coin
-##
-## value: Coin -> Nat
-## value = \coin ->
-##     when coin is
-##         Copper -> 1
-##         Silver -> 100
-##         Gold -> 10000
-##
-## totalValue: Purse -> Nat
-## totalValue = \purse ->
-##     purse |> Bag.walk 0 \total, coin, mult ->
-##         total + (value coin) * mult
-##
-## ```
 interface Bag
     exposes [
         Bag,
@@ -50,9 +31,30 @@ interface Bag
     ]
     imports []
 
+## A bag is also known as a multiset. It is a modificaiton of the concept of a set which allows for multiple instances of each element. Each item then also has a multiplicity, defined by the number of instances of that item in the multiset.
+
 Bag a := Dict a Nat implements [Eq]
 
-## #Construct
+## Example:
+## ```
+## Coin : Copper | Silver | Gold
+## Purse : Bag Coin
+##
+## value: Coin -> Nat
+## value = \coin ->
+##     when coin is
+##         Copper -> 1
+##         Silver -> 100
+##         Gold -> 10000
+##
+## totalValue: Purse -> Nat
+## totalValue = \purse ->
+##     purse |> Bag.walk 0 \total, coin, mult ->
+##         total + (value coin) * mult
+##
+## ```
+
+## ## Construct
 
 ## Create an empty bag
 empty : {} -> Bag *
@@ -112,7 +114,7 @@ expect
 
 # separator
 
-## #Combine
+## ## Combine
 
 ## Join two bags together, adding the number of items in each bag.
 join : Bag k, Bag k -> Bag k
@@ -189,7 +191,7 @@ expect
     expectedBag = empty {} |> insert 1 "a"
     resultBag == expectedBag
 
-## #Inspect
+## ## Inspect
 
 ## Get the total number of items in the bag
 size : Bag * -> Nat
@@ -251,7 +253,7 @@ expect
     bagB = empty {} |> insert 4 "a" |> insert 1 "b" |> insert 1 "c"
     bagA |> includedIn bagB |> Bool.not
 
-## #Modify
+## ## Modify
 
 ## Insert a number of instances of an item into a bag
 insert : Bag a, Nat, a -> Bag a

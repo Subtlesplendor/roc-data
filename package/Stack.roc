@@ -1,7 +1,7 @@
 ## A `Stack` is like a `List` but with a reduced interface. Only the top of the `Stack` accessible. Construct one either by calling `fromList` or by creating an `empty` `Stack` and `push`ing elements onto the stack. Access the top element using `pop`.
 ## Example:
 ## ```
-## State = {current: Page, back: Stack Page, forward: Stack Page }
+## State : {current: Page, back: Stack Page, forward: Stack Page }
 ## goBack: State -> State
 ## goBack = \state ->
 ##     {current, back, forward} = state
@@ -27,7 +27,7 @@ interface Stack
 
 Stack a := List a implements [Eq]
 
-## ## Basic Primitives
+## # Basic Primitives
 
 # separator
 
