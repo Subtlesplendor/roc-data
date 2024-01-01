@@ -71,7 +71,7 @@ interface NonEmptyList
 
 NonEmptyList a := { body : List a, foot : a } implements [Eq]
 
-## ## Constructors
+## #Construct
 
 ## Construct a non-empty list from a `List`. Returns `ListWasEmpty` if the original list was empty.
 fromList : List a -> Result (NonEmptyList a) [ListWasEmpty]
